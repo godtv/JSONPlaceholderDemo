@@ -14,7 +14,7 @@ import Moya_ObjectMapper
 import RxCocoa
 
 
-class ViewController: UIViewController {
+ class ViewController: UIViewController {
     
     private var searchController:UISearchController? = nil
     
@@ -52,18 +52,13 @@ class ViewController: UIViewController {
         self.tableView.snp.makeConstraints { (make) -> Void in
             make.edges.equalToSuperview()
         }
-        
-        self.tableView.rx.itemSelected.subscribe(onNext:{ indexPath in
-            
-        }).disposed(by: disposeBag)
-        
+ 
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(PhotoModel.self))
             .bind { [weak self] indexPath, item in
               print("\(item)")
             }
             .disposed(by: disposeBag)
  
-        
     }
     
     private func setupSearchController() {
@@ -72,7 +67,8 @@ class ViewController: UIViewController {
         navigationItem.searchController = searchController
         searchController?.isActive = true
         searchController?.searchBar.becomeFirstResponder()
-        
+        searchController?.automaticallyShowsCancelButton = false
+        searchController?.searchBar.delegate = self
         
         searchController?.searchBar.rx.text
             .orEmpty
@@ -80,9 +76,15 @@ class ViewController: UIViewController {
             .distinctUntilChanged()
             .bind(to: viewModel.keywords)
             .disposed(by: disposeBag)
-        
-        
+            
     }
 }
 
-
+ extension ViewController: UISearchBarDelegate {
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.count == 0 {
+            searchBar.perform(#selector(resignFirstResponder), with: nil, afterDelay: 0.1)
+        }
+    }
+ }
